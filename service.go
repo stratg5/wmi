@@ -1,3 +1,4 @@
+//go:build windows
 // +build windows
 
 package wmi
@@ -389,6 +390,10 @@ func (s *Service) ExecMethod(className string, methodName string, inParams *Inst
 		return nil, ole.NewError(hres)
 	}
 
+	if outParams == nil {
+		return nil, nil
+	}
+
 	return newInstance(outParams), nil
 }
 
@@ -469,11 +474,14 @@ func processEnumToObject(query string, enum *Enum, dst interface{}) (err error) 
 
 // Query executes a WMI Query Language (WQL) query and maps the results to a structure or slice of structures
 // The destination must be a pointer to a struct:
-//     var dst Win32_ComputerSystem
-//     err = service.Query("SELECT * FROM Win32_ComputerSystem", &dst)
+//
+//	var dst Win32_ComputerSystem
+//	err = service.Query("SELECT * FROM Win32_ComputerSystem", &dst)
+//
 // Or a pointer to a slice:
-//     var dst []CIM_DataFile
-//     err = service.Query(`SELECT * FROM CIM_DataFile WHERE Drive = 'C:' AND Path = '\\'`, &dst)
+//
+//	var dst []CIM_DataFile
+//	err = service.Query(`SELECT * FROM CIM_DataFile WHERE Drive = 'C:' AND Path = '\\'`, &dst)
 func (s *Service) Query(query string, dst interface{}) (err error) {
 	var enum *Enum
 	if enum, err = s.ExecQuery(query); err != nil {

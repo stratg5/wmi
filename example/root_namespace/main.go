@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/drtimf/wmi"
+	"github.com/stratg5/wmi"
 )
 
 func main() {
