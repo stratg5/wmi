@@ -1,4 +1,4 @@
-module github.com/drtimf/wmi
+module github.com/stratg5/wmi
 
 go 1.15
 

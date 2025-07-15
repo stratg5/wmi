@@ -10,8 +10,8 @@ There are a number of WMI library implementations around, but not many of them p
 
 This presently only works on Windows.  If there is ever a port of the Python Impacket to Go, it would be good to have this work on Linux and MacOS as well.
 
-[![Build Status](https://travis-ci.com/drtimf/wmi.svg?branch=main)](https://travis-ci.com/drtimf/wmi)
-[![GoDoc](https://pkg.go.dev/badge/github.com/drtimf/wmi)](https://pkg.go.dev/github.com/drtimf/wmi)
+[![Build Status](https://travis-ci.com/stratg5/wmi.svg?branch=main)](https://travis-ci.com/stratg5/wmi)
+[![GoDoc](https://pkg.go.dev/badge/github.com/stratg5/wmi)](https://pkg.go.dev/github.com/stratg5/wmi)
 
 ## Examples
 
@@ -23,7 +23,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/drtimf/wmi"
+	"github.com/stratg5/wmi"
 )
 
 func main() {
@@ -53,7 +53,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/drtimf/wmi"
+	"github.com/stratg5/wmi"
 )
 
 func main() {
