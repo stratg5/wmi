@@ -1,3 +1,4 @@
+//go:build windows
 // +build windows
 
 package wmi
@@ -161,7 +162,11 @@ func (i *Instance) Get(name string) (value interface{}, cimType CIMTYPE_ENUMERAT
 // is a CIM instance, Put updates a property value only. Put cannot create a property value.
 func (i *Instance) Put(name string, value interface{}) (err error) {
 	var hres uintptr
-	vtValue := NewVariant(value)
+
+	vtValue, err := NewVariant(value)
+	if err != nil {
+		return err
+	}
 
 	var nameUTF16 *uint16
 	if nameUTF16, err = syscall.UTF16PtrFromString(name); err != nil {
