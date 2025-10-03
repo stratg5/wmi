@@ -1,9 +1,11 @@
+//go:build windows
 // +build windows
 
 // Some of this is derrived from invoke() in github.com/go-ole/go-ole/dispatch_windows.go
 package wmi
 
 import (
+	"errors"
 	"fmt"
 	"math/big"
 	"reflect"
@@ -15,7 +17,7 @@ import (
 )
 
 // NewVariant creates a variant from a go type
-func NewVariant(v interface{}) (variant ole.VARIANT) {
+func NewVariant(v interface{}) (variant ole.VARIANT, err error) {
 	ole.VariantInit(&variant)
 
 	switch vv := v.(type) {
@@ -97,8 +99,17 @@ func NewVariant(v interface{}) (variant ole.VARIANT) {
 		variant = ole.NewVariant(ole.VT_UNKNOWN, int64(uintptr(unsafe.Pointer(&(v.(*ole.IUnknown).RawVTable)))))
 	case *Instance:
 		variant = ole.NewVariant(ole.VT_UNKNOWN, int64(uintptr(unsafe.Pointer(&(v.(*Instance).classObject.RawVTable)))))
+	case []string:
+		var safeByteArray *ole.SafeArray
+
+		safeByteArray, err = safeArrayFromStringSlice(v.([]string))
+		if err != nil {
+			return
+		}
+
+		variant = ole.NewVariant(ole.VT_ARRAY|ole.VT_BSTR, int64(uintptr(unsafe.Pointer(safeByteArray))))
 	default:
-		panic(fmt.Sprintf("UNSUPPORTED for NewVariant: %T %v\n", v, v))
+		err = fmt.Errorf("UNSUPPORTED for NewVariant: %T %v\n", v, v)
 	}
 
 	return
@@ -178,7 +189,7 @@ func convertAnyNumber(inputValue interface{}, outputKind reflect.Kind) (value in
 	return
 }
 
-func converString(inputValue string, outputKind reflect.Kind) (value interface{}, err error) {
+func convertString(inputValue string, outputKind reflect.Kind) (value interface{}, err error) {
 
 	var intOutput int64
 	var uintOutput uint64
@@ -237,7 +248,7 @@ func VariantToGoType(variant *ole.VARIANT, outputType reflect.Type) (value inter
 	case ole.VT_NULL:
 		value = nil
 	case ole.VT_BSTR:
-		value, err = converString(variant.ToString(), outputType.Kind())
+		value, err = convertString(variant.ToString(), outputType.Kind())
 	case ole.VT_BOOL, ole.VT_UI1, ole.VT_UI2, ole.VT_UI4, ole.VT_UI8, ole.VT_I1, ole.VT_I2, ole.VT_I4, ole.VT_I8:
 		value, err = convertNumber(variant.Val, outputType.Kind())
 	case ole.VT_ARRAY | ole.VT_BSTR:
@@ -262,4 +273,17 @@ func VariantToGoType(variant *ole.VARIANT, outputType reflect.Type) (value inter
 	}
 
 	return
+}
+
+func safeArrayFromStringSlice(slice []string) (*ole.SafeArray, error) {
+	array, _ := safeArrayCreateVector(ole.VT_BSTR, 0, uint32(len(slice)))
+
+	if array == nil {
+		return nil, errors.New("Could not convert []string to SAFEARRAY")
+	}
+	// SysAllocStringLen(s)
+	for i, v := range slice {
+		safeArrayPutElement(array, int64(i), uintptr(unsafe.Pointer(ole.SysAllocStringLen(v))))
+	}
+	return array, nil
 }
