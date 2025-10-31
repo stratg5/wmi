@@ -300,15 +300,14 @@ func safeArrayFromStringSlice(slice []string) (*ole.SafeArray, error) {
 }
 
 func safeArrayFromUInt32Slice(slice []uint32) (*ole.SafeArray, error) {
-	// Create a 1D SAFEARRAY of VT_UI4 (unsigned 32-bit integers)
 	array, _ := safeArrayCreateVector(ole.VT_UI4, 0, uint32(len(slice)))
 	if array == nil {
-		return nil, errors.New("Could not convert []uint32 to SAFEARRAY")
+		return nil, errors.New("could not convert []uint32 to SAFEARRAY")
 	}
 
 	for i, v := range slice {
-		if err := safeArrayPutElement(array, int64(i), uintptr(v)); err != nil {
-			return nil, fmt.Errorf("safeArrayPutElement failed at index %d: %w", i, err)
+		if err := safeArrayPutElement(array, int64(i), uintptr(unsafe.Pointer(&v))); err != nil {
+			return nil, fmt.Errorf("SafeArrayPutElement failed at index %d: %w", i, err)
 		}
 	}
 
