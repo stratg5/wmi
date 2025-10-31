@@ -108,6 +108,15 @@ func NewVariant(v interface{}) (variant ole.VARIANT, err error) {
 		}
 
 		variant = ole.NewVariant(ole.VT_ARRAY|ole.VT_BSTR, int64(uintptr(unsafe.Pointer(safeByteArray))))
+	case []uint32:
+		var safeArray *ole.SafeArray
+
+		safeArray, err = safeArrayFromUInt32Slice(v.([]uint32))
+		if err != nil {
+			return
+		}
+
+		variant = ole.NewVariant(ole.VT_ARRAY|ole.VT_UI4, int64(uintptr(unsafe.Pointer(safeArray))))
 	default:
 		err = fmt.Errorf("UNSUPPORTED for NewVariant: %T %v\n", v, v)
 	}
@@ -281,9 +290,27 @@ func safeArrayFromStringSlice(slice []string) (*ole.SafeArray, error) {
 	if array == nil {
 		return nil, errors.New("Could not convert []string to SAFEARRAY")
 	}
+
 	// SysAllocStringLen(s)
 	for i, v := range slice {
 		safeArrayPutElement(array, int64(i), uintptr(unsafe.Pointer(ole.SysAllocStringLen(v))))
 	}
+
+	return array, nil
+}
+
+func safeArrayFromUInt32Slice(slice []uint32) (*ole.SafeArray, error) {
+	// Create a 1D SAFEARRAY of VT_UI4 (unsigned 32-bit integers)
+	array, _ := safeArrayCreateVector(ole.VT_UI4, 0, uint32(len(slice)))
+	if array == nil {
+		return nil, errors.New("Could not convert []uint32 to SAFEARRAY")
+	}
+
+	for i, v := range slice {
+		if err := safeArrayPutElement(array, int64(i), uintptr(v)); err != nil {
+			return nil, fmt.Errorf("safeArrayPutElement failed at index %d: %w", i, err)
+		}
+	}
+
 	return array, nil
 }
